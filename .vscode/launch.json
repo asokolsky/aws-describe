@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["-v", "arn:aws:s3:::clari-delivery-platform-pipelines/front50/pipelines/1b66e8fd-8740-402c-8bb5-5a6e20027a98/pipeline-metadata.json"],
+        }
+    ]
+}
