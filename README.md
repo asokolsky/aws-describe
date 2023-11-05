@@ -1,6 +1,9 @@
 # aws-describe
 
-CLI utility to (recursively) describe AWS resources by ID or ARN.
+CLI utilities to:
+
+* (recursively) describe AWS resources by ID or ARN.
+* find an EC2 instance by ID or ARN of the related resource.
 
 ## Usage
 
@@ -10,13 +13,13 @@ source .venv/bin/activate
 
 To run tests:
 ```
-(.venv) asokolsky in ~/Projects/aws-describe [master]> make test
+> make test
 ```
 
 ## Describe Object
 
 ```
-(.venv) asokolsky in ~/Projects/aws-describe [master]> python src/describe.py -h
+> python src/describe.py -h
 usage: aws-describe [-h] [-r] [--ids] [--id-names] [-v] instance
 
 AWS object/instance explorer
@@ -39,7 +42,7 @@ Examples:
 ## Find Instance
 
 ```
-(.venv) asokolsky in ~/Projects/aws-describe [master]> python src/find-instance.py -h
+> python src/find-instance.py -h
 usage: aws-find-instance [-h] [-v] [--ids] [--id-names] [--terminate] instance
 
 Find an AWS EC2 instance(s) by a related ID or ARN
