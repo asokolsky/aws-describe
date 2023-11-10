@@ -18,6 +18,11 @@ To run tests:
 
 ## Describe Object
 
+Login into your AWS account.  As a side-effect this usually sets environment
+variables `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and,
+sometimes,  `AWS_SESSION_TOKEN`, `AWS_CREDENTIAL_EXPIRATION`.
+
+Then:
 ```
 > python src/describe.py -h
 usage: aws-describe [-h] [-r] [--ids] [--id-names] [-v] instance
@@ -25,7 +30,7 @@ usage: aws-describe [-h] [-r] [--ids] [--id-names] [-v] instance
 AWS object/instance explorer
 
 positional arguments:
-  instance       AWS object/instance ID or ARN
+  instance       AWS object/instance ID or ARN or IPv4
 
 options:
   -h, --help     show this help message and exit
@@ -41,6 +46,11 @@ Examples:
 
 ## Find Instance
 
+Login into your AWS account.  As a side-effect this usually sets environment
+variables `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and,
+sometimes,  `AWS_SESSION_TOKEN`, `AWS_CREDENTIAL_EXPIRATION`.
+
+Then:
 ```
 > python src/find-instance.py -h
 usage: aws-find-instance [-h] [-v] [--ids] [--id-names] [--terminate] instance
@@ -61,5 +71,5 @@ Examples:
     python src/find-instance.py 10.6.64.23
     python src/find-instance.py --id-names sg-73953806
     python src/find-instance.py -v --ids vpc-82a609e6
-    python src/find-instance.py arn:aws:iam::123456789012:instance-profile/grimer_production
+    python src/find-instance.py arn:aws:iam::123456789012:instance-profile/foo_bar
 ```

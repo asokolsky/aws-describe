@@ -47,6 +47,51 @@ def find_all_ids(d:[Dict[str, Any]], verbose:bool,
             res = res | find_all_ids(v, verbose, ignore_keys)
     return res
 
+def describe_ip_address(ip: str) -> Tuple[int, Dict[str, Any]]:
+    client = boto3.client('ec2')
+    #
+    # is this a private IP associated with an eni?
+    #
+    res = client.describe_network_interfaces(Filters=[{
+        'Name': 'addresses.private-ip-address',
+        'Values': [ip]
+    }])
+    res = res['NetworkInterfaces']
+    if res:
+        return 0, res[0]
+    #
+    # is this a public IP associated with an eni?
+    #
+    res = client.describe_network_interfaces(Filters=[{
+        'Name': 'association.public-ip',
+        'Values': [ip]
+    }])
+    res = res['NetworkInterfaces']
+    if res:
+        return 0, res[0]
+    #
+    # is this an IP associated with an eni?
+    #
+    res = client.describe_instances(Filters=[{
+        'Name': 'private-ip-address',
+        'Values': [ip]
+    }])
+    res = res['Reservations']
+    if res:
+        return 0, res[0]
+    #
+    # is this an IP associated with an eni?
+    #
+    res = client.describe_instances(Filters=[{
+        'Name': 'ip-address',
+        'Values': [ip]
+    }])
+    res = res['Reservations']
+    if res:
+        return 0, res[0]
+    print(f'No ENIs or EIs with address {ip} found', file=sys.stderr)
+    return 1, {}
+
 def describe_instance(id:str) -> Tuple[int, Dict[str, Any]]:
     '''
     Returns exit_code, res dict
@@ -78,6 +123,21 @@ def describe_vpc(id:str) -> Tuple[int, Dict[str, Any]]:
     '''
     res = boto3.client('ec2').describe_vpcs(VpcIds=[id])
     return 0, res['Vpcs'][0]
+
+def describe_vpc_endpoint(id:str) -> Tuple[int, Dict[str, Any]]:
+    '''
+    Returns exit_code, res dict
+    '''
+    res = boto3.client('ec2').describe_vpc_endpoints(VpcEndpointIds=[id])
+    return 0, res['VpcEndpoints'][0]
+
+def describe_vpc_peering(id:str) -> Tuple[int, Dict[str, Any]]:
+    '''
+    Returns exit_code, res dict
+    '''
+    res = boto3.client('ec2').describe_vpc_peering_connections(
+        VpcPeeringConnectionIds=[id])
+    return 0, res['VpcPeeringConnections'][0]
 
 def describe_vpc_cidr_assoc(id:str) -> Tuple[int, Dict[str, Any]]:
     '''
@@ -283,6 +343,34 @@ def describe_eks_arn(arn:str, res_type:str, res_name:str) -> Tuple[
         ec = 1
     return ec, res
 
+def describe_es_arn(arn:str, res_type:str, res_name:str) -> Tuple[
+        int, Dict[str, Any]]:
+    ec = 0
+    res: Dict[str, Any] = {}
+    client = boto3.client('es')
+    if res_type == 'domain':
+        res = client.describe_elasticsearch_domain(DomainName=res_name)
+        res = res['DomainStatus']
+    else:
+        print('ERROR: not implemented for es', file=sys.stderr)
+        print(f'res_type: {res_type}', file=sys.stderr)
+        print(f'res_name: {res_name}', file=sys.stderr)
+        ec = 1
+    return ec, res
+
+def describe_ec2_arn(arn:str, res_type:str, res_name:str) -> Tuple[
+        int, Dict[str, Any]]:
+    ec = 0
+    res: Dict[str, Any] = {}
+    #client = boto3.client('e2')
+    if res_type == 'vpc-peering-connection':
+        return describe_vpc_peering(res_name)
+    else:
+        print('ERROR: not implemented for ec2', file=sys.stderr)
+        print(f'res_type: {res_type}', file=sys.stderr)
+        print(f'res_name: {res_name}', file=sys.stderr)
+        ec = 1
+    return ec, res
 
 def describe_arn(id:str) -> Tuple[int, Dict[str, Any]]:
     '''
@@ -310,6 +398,10 @@ def describe_arn(id:str) -> Tuple[int, Dict[str, Any]]:
         ec, res = describe_elbv2_arn(id, res_type, res_name)
     elif service == 'eks':
         ec, res = describe_eks_arn(id, res_type, res_name)
+    elif service == 'es':
+        ec, res = describe_es_arn(id, res_type, res_name)
+    elif service == 'ec2':
+        ec, res = describe_ec2_arn(id, res_type, res_name)
     else:
         print('ERROR: not implemented for', service, file=sys.stderr)
         ec = 1
@@ -350,6 +442,16 @@ dispatch_table = (
         'a VPC ID',
         describe_vpc
     ),
+    (   # vpce-0f0ba5d8ea3c1de7b
+        re.compile("^vpce-[a-f0-9]{8}(?:[a-f0-9]{9})?$"),
+        'a VPC endpoint ID',
+        describe_vpc_endpoint
+    ),
+    (   # pcx-002281f649a65b178
+        re.compile("^pcx-[a-f0-9]{8}(?:[a-f0-9]{9})?$"),
+        'a VPC peering connection ID',
+        describe_vpc_peering
+    ),
     (
         re.compile("^dopt-[a-f0-9]{8}(?:[a-f0-9]{9})?$"),
         'a DHCP options ID',
@@ -380,10 +482,15 @@ dispatch_table = (
         'a VPC CIDR association ID',
         describe_vpc_cidr_assoc
     ),
-    (   # arn:aws:iam::123456789012:role/grimer_staging
+    (   # arn:aws:iam::123456789012:role/foo_bar
         re.compile("^arn:aws:.*"),
         'an AWS ARN',
         describe_arn
+    ),
+    (   # 192.168.10.10
+        re.compile("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"),
+        'an IPv4 address',
+        describe_ip_address
     ),
 )
 cache:Dict[str, Any] = {}
@@ -460,7 +567,7 @@ def main() -> int:
     ap.add_argument(
         '-i', '--ignore', default='',
         help='Comma-separated list of keys to ignore, relevant only when -r is used')
-    ap.add_argument('instance', help='AWS object/instance ID or ARN')
+    ap.add_argument('instance', help='AWS object/instance ID or ARN or IPv4')
 
     #
     # parse the command line
