@@ -23,7 +23,15 @@ def find_all_ids(d:[Dict[str, Any]], verbose:bool,
                 print(f'Ignoring {k} as requested', file=sys.stderr)
             continue
         elif k == 'SecurityGroups' and isinstance(v, list):
-            res = res | set(v)
+            #print("v:", v)
+            #res = res | set(v)
+            for sg in v:
+                if isinstance(sg, str):
+                    res.add(sg)
+                elif isinstance(sg, dict):
+                    res = res | find_all_ids(sg, verbose, ignore_keys)
+                else:
+                    assert False
         elif k.endswith('Id'):
             if k in ("AvailabilityZoneId"):
                 if verbose:
