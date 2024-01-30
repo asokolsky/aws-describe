@@ -224,6 +224,15 @@ def describe_lifecycle_policy(id:str) -> Tuple[int, Dict[str, Any]]:
     res = res['Policy']
     return 0, res
 
+def describe_certificate(arn:str) -> Tuple[int, Dict[str, Any]]:
+    '''
+    Returns exit_code, res dict
+    '''
+    client = boto3.client('acm')
+    res = client.describe_certificate(CertificateArn=arn)
+    res = res['Certificate']
+    return 0, res
+
 def describe_iam_arn(res_type:str, res_name:str) -> Tuple[int, Dict[str, Any]]:
     ec = 0
     res:Dict[str, Any] = {}
@@ -384,6 +393,20 @@ def describe_ec2_arn(arn:str, res_type:str, res_name:str) -> Tuple[
         ec = 1
     return ec, res
 
+def describe_acm_arn(arn:str, res_type:str, res_name:str) -> Tuple[
+        int, Dict[str, Any]]:
+    ec = 0
+    res: Dict[str, Any] = {}
+    #client = boto3.client('e2')
+    if res_type == 'certificate':
+        return describe_certificate(arn)
+    else:
+        print('ERROR: not implemented for acm', file=sys.stderr)
+        print(f'res_type: {res_type}', file=sys.stderr)
+        print(f'res_name: {res_name}', file=sys.stderr)
+        ec = 1
+    return ec, res
+
 def describe_arn(id:str) -> Tuple[int, Dict[str, Any]]:
     '''
     Returns exit_code, res dict
@@ -414,6 +437,8 @@ def describe_arn(id:str) -> Tuple[int, Dict[str, Any]]:
         ec, res = describe_es_arn(id, res_type, res_name)
     elif service == 'ec2':
         ec, res = describe_ec2_arn(id, res_type, res_name)
+    elif service == 'acm':
+        ec, res = describe_acm_arn(id, res_type, res_name)
     else:
         print('ERROR: not implemented for', service, file=sys.stderr)
         ec = 1
