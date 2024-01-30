@@ -105,7 +105,11 @@ def describe_instance(id:str) -> Tuple[int, Dict[str, Any]]:
     Returns exit_code, res dict
     '''
     res = boto3.client('ec2').describe_instances(InstanceIds=[id])
-    return 0, res['Reservations'][0]['Instances'][0]
+    res = res['Reservations']
+    if res:
+        return 0, res[0]['Instances'][0]
+    print(f'No EC2 instances with id {id} found', file=sys.stderr)
+    return 1, {}
 
 def describe_ami(id:str) -> Tuple[int, Dict[str, Any]]:
     '''
