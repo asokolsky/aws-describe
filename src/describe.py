@@ -47,6 +47,8 @@ def find_all_ids(d:[Dict[str, Any]], verbose:bool,
                 #},
         elif k.endswith('Arns') and isinstance(v, list):
             res = res | set(v)
+        elif k == "InUseBy" and isinstance(v, list):
+            res = res | set(v)
         elif isinstance(v, list):
             for elt in v:
                 if isinstance(elt, dict):
