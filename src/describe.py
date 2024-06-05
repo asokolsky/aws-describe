@@ -217,6 +217,15 @@ def describe_dhcp_options(id:str) -> Tuple[int, Dict[str, Any]]:
     res = res['DhcpOptions'][0]
     return 0, res
 
+def describe_vpn(id:str) -> Tuple[int, Dict[str, Any]]:
+    '''
+    Returns exit_code, res dict
+    '''
+    ec2 = boto3.client('ec2')
+    res = ec2.describe_vpn_connections(VpnConnectionIds=[id])
+    res = res['VpnConnections'][0]
+    return 0, res
+
 def describe_lifecycle_policy(id:str) -> Tuple[int, Dict[str, Any]]:
     '''
     Returns exit_code, res dict
@@ -521,6 +530,11 @@ dispatch_table = (
         'a VPC CIDR association ID',
         describe_vpc_cidr_assoc
     ),
+    (   # vpn-176b7876
+        re.compile("^vpn-[a-f0-9]{8}(?:[a-f0-9]{9})?$"),
+        'a VPN ID',
+        describe_vpn
+    ),
     (   # arn:aws:iam::123456789012:role/foo_bar
         re.compile("^arn:aws:.*"),
         'an AWS ARN',
@@ -532,14 +546,27 @@ dispatch_table = (
         describe_ip_address
     ),
 )
+
 cache:Dict[str, Any] = {}
 
-def describe_one(id:str, verbose:bool, to_print:bool,
-        ignore_keys:List[str]) -> Tuple[int, Dict[str, Any], Set[str]]:
+def describe_one(
+    id:str, verbose:bool, to_print:bool, ignore_keys:List[str],
+        query:str) -> Tuple[int, Dict[str, Any], Set[str]]:
     '''
     Given id locate a function which can describe it, recurse if needed.
     Side-effect, stdout, described_ids
     '''
+
+    def produce_output(res:Any, query:str):
+        if query:
+            import jmespath
+            res = jmespath.search(query, res)
+            if not res:
+                print(f"query '{query}' returned no result", file=sys.stderr)
+        print(json.dumps(
+            res, indent=4, default=common.json_datetime_serializer))
+        return
+
     if verbose:
         print("Describe", id, file=sys.stderr)
 
@@ -553,8 +580,7 @@ def describe_one(id:str, verbose:bool, to_print:bool,
             return ec, res, find_all_ids(res, verbose, ignore_keys)
 
         if to_print:
-            print(json.dumps(
-                res, indent=4, default=common.json_datetime_serializer))
+            produce_output(res, query)
         cache[id] = res
         if verbose:
             print('Looking for related objects...', file=sys.stderr)
@@ -567,14 +593,17 @@ def describe_one(id:str, verbose:bool, to_print:bool,
     return 1, {}, set()
 
 
-def describe_all(id:str, verbose:bool, to_print:bool,
-        described_ids:Set[str], ignore_keys:List[str]) -> Tuple[int, Set[str]]:
-
-    ec, res, more_ids = describe_one(id, verbose, to_print, ignore_keys)
+def describe_all(
+    id:str, verbose:bool, to_print:bool, described_ids:Set[str],
+        ignore_keys:List[str], query:str) -> Tuple[int, Set[str]]:
+    '''
+    implementation
+    '''
+    ec, res, more_ids = describe_one(id, verbose, to_print, ignore_keys, query)
     described_ids.add(id)
     for id1 in more_ids - described_ids:
-        ec1, res1 = describe_all(id1, verbose, to_print, described_ids,
-            ignore_keys)
+        ec1, res1 = describe_all(
+            id1, verbose, to_print, described_ids, ignore_keys, query)
     return ec, described_ids
 
 
@@ -606,29 +635,33 @@ def main() -> int:
     ap.add_argument(
         '-i', '--ignore', default='',
         help='Comma-separated list of keys to ignore, relevant only when -r is used')
+    ap.add_argument(
+        '--query', default='',
+        help='Filter JSON output using JMESPath syntax')
     ap.add_argument('instance', help='AWS object/instance ID or ARN or IPv4')
-
     #
     # parse the command line
     #
     args = ap.parse_args()
     if args.id_names:
-        format = common.OutputOption.id_names
+        output_format = common.OutputOption.id_names
     elif args.ids:
-        format = common.OutputOption.ids
+        output_format = common.OutputOption.ids
     else:
-        format = common.OutputOption.json
+        output_format = common.OutputOption.json
 
     ignore_keys: List[str] = args.ignore.split(',')
     try:
-        to_print = (format == common.OutputOption.json)
+        to_print = (output_format == common.OutputOption.json)
         if args.recurse:
             ec, described_ids = describe_all(
-                args.instance, args.verbose, to_print, set(), ignore_keys)
+                args.instance, args.verbose, to_print, set(), ignore_keys,
+                args.query)
             more_ids = set()
         else:
             ec, res, more_ids = describe_one(
-                args.instance, args.verbose, to_print, ignore_keys)
+                args.instance, args.verbose, to_print, ignore_keys,
+                args.query)
             described_ids = set([args.instance])
 
         # failed to find anything matching the object ID
@@ -638,11 +671,11 @@ def main() -> int:
             return ec
 
         instances = sorted(described_ids.union(more_ids))
-        if format == common.OutputOption.ids:
+        if output_format == common.OutputOption.ids:
             for id in instances:
                 if id != args.instance:
                     print(id)
-        elif format == common.OutputOption.id_names:
+        elif output_format == common.OutputOption.id_names:
             from tabulate import tabulate
             rows:List[Tuple[str, str]] = []
             for id in instances:

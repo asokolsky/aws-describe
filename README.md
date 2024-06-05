@@ -44,6 +44,19 @@ Examples:
     python src/describe.py -v arn:aws:iam::123456789012:role/foo
 ```
 
+Another example, now using `--query` with [JMESPath](https://jmespath.org/)
+syntax:
+```
+python src/describe.py vpn-176b7876  --query CustomerGatewayConfiguration
+```
+is equivalent to:
+```sh
+aws ec2 describe-vpn-connections \
+  --filter 'Name=vpn-connection-id,Values=vpn-176b7876' \
+  --query 'VpnConnections[0].CustomerGatewayConfiguration' \
+  --output text
+```
+
 ## Find Instance
 
 Login into your AWS account.  As a side-effect this usually sets environment
