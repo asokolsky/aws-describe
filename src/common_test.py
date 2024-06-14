@@ -72,4 +72,14 @@ class parse_arn_test(unittest.TestCase):
         # arn:aws:organizations::123456789012:ou/o-rhaczyc90z/ou-h68e-zirf3o0o
         # arn:aws:organizations::123456789012:account/o-rhaczyc90z/063495072266
 
+        arn = "arn:aws:s3:::foo-bar"
+        prefix,aws,service,region,acct_id,res_type,res_name = parse_arn(arn)
+        self.assertEqual(prefix, 'arn')
+        self.assertEqual(aws, 'aws')
+        self.assertEqual(service, 's3')
+        self.assertEqual(region, '')
+        self.assertEqual(acct_id, '')
+        self.assertEqual(res_type, '')
+        self.assertEqual(res_name, 'foo-bar')
+
         return

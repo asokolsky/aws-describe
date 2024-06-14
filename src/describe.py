@@ -322,17 +322,23 @@ def describe_autoscaling_arn(res_type:str, res_name:str) -> Tuple[
 
 def describe_s3_arn(res_type:str, res_name:str) -> Tuple[
         int, Dict[str, Any]]:
-    ec = 1
-    res:Dict[str, Any] = {}
-    # res_type - bucket name
+    # res_name - bucket name
     # res_name - key into bucket
     if not res_name:
-        print('ERROR: not implemented s3 bucket info', res_type,
-                file=sys.stderr)
-    else:
-        print('ERROR: not implemented s3 bucket object info',
-                res_type, res_name, file=sys.stderr)
-    return ec, res
+        print(f'ERROR: not implemented s3 bucket {res_type} info', file=sys.stderr)
+        #return describe_s3_bucket(res_type)
+
+    bucket = res_name
+    client = boto3.client('macie2')
+    res = client.describe_buckets(criteria={
+        'bucketName': {
+            "eq":[bucket]
+        }
+    })
+    if not res['buckets']:
+        return 1, {'Error': f'Bad bucket {bucket}'}
+    res = res['buckets'][0]
+    return (0, res)
 
 def describe_elbv2_arn(arn:str, res_type:str, res_name:str) -> Tuple[
         int, Dict[str, Any]]:
@@ -577,6 +583,8 @@ def describe_one(
             print(f'Treating {id} as {msg}', file=sys.stderr)
         ec, res = f(id)
         if ec:
+            if verbose:
+                print(f'Error: {res}', file=sys.stderr)
             return ec, res, find_all_ids(res, verbose, ignore_keys)
 
         if to_print:
