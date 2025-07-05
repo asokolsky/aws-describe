@@ -1,12 +1,14 @@
+import sys
 from datetime import date, datetime
 from enum import Enum
-#import sys
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Union
+
 
 class OutputOption(str, Enum):
-    '''
-    CLI program output options
-    '''
+    """
+    CLI program output options.
+    """
+
     json = 'json'
     ids = 'ids'
     id_names = 'id-names'
@@ -15,31 +17,37 @@ class OutputOption(str, Enum):
     def is_valid(cls, st: Union[str, 'OutputOption']) -> bool:
         return st in cls._value2member_map_
 
-    def __repr__(self):
-        'To enable serialization as a string...'
+    def __repr__(self) -> str:
+        """To enable serialization as a string..."""
         return repr(self.value)
 
-def get_tag(d:Dict[str, Any], tag_key:str) -> Any:
-    '''
+
+def get_tag(d: dict[str, Any], tag_key: str) -> Any:
+    """
     Retrieve just one tag.
+
     Returns None if the tag not present
-    '''
+    """
     for tag in d.get('Tags', []):
         if tag.get('Key', '') == tag_key:
             return tag.get('Value', None)
 
     return None
 
-def json_datetime_serializer(obj):
-    '''
-    Helper method to serialize datetime fields
-    '''
+
+def json_datetime_serializer(obj: Any) -> str:
+    """
+    Serialize datetime fields.
+    """
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
-    raise TypeError(f"Type {type(obj)} not serializable")
+    raise TypeError(f'Type {type(obj)} not serializable')
 
-def parse_arn(arn:str) -> Tuple[str,str,str,str,str,str,str]:
-    '''
+
+def parse_arn(arn: str) -> tuple[str, str, str, str, str, str, str]:
+    """
+    Parse the arn.
+
     Returns (
         'arn',
         'aws', partition
@@ -49,8 +57,8 @@ def parse_arn(arn:str) -> Tuple[str,str,str,str,str,str,str]:
         'role', - resource_type (can be '')
         'grimer_staging' - resource_name
     )
-    '''
-    prefix = aws = service = region = acct_id = res_type = res_name = ""
+    """
+    prefix = aws = service = region = acct_id = res_type = res_name = ''
     parts = arn.split(':')
     if len(parts) < 6:
         # bad format
@@ -70,6 +78,10 @@ def parse_arn(arn:str) -> Tuple[str,str,str,str,str,str,str]:
         else:  # len(parts) >= 7:
             res_type = parts[5]
             res_name = ':'.join(parts[6:])
-    #if not prefix:
+    # if not prefix:
     #    print('ERROR: Failed to parse:', arn, file=sys.stderr)
-    return (prefix,aws,service,region,acct_id,res_type,res_name)
+    return (prefix, aws, service, region, acct_id, res_type, res_name)
+
+
+def eprint(*args: Any) -> None:
+    print(*args, file=sys.stderr)

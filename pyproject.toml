@@ -1,0 +1,58 @@
+[project]
+name = "aws-describe"
+version = "0.1.0"
+description = "CLI utilities to describe AWS resources by ID or ARN, find an EC2 instance."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "boto3>=1.39.2",
+    "botocore>=1.39.2",
+    "jmespath>=1.0.1",
+    "tabulate>=0.9.0",
+]
+
+[project.scripts]
+aws-describe = "src/describe:main"
+aws-find-instance = "src/find-instance:main"
+
+[dependency-groups]
+dev = [
+    "boto3-stubs>=1.39.2",
+    "mypy>=1.16.1",
+    "ruff>=0.12.1",
+    "types-jmespath>=1.0.2.20250529",
+    "types-tabulate>=0.9.0.20241207",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "A001","A002","ANN401","ARG001",
+    "B011",
+    "C901","COM812",
+    "D100","D101","D102","D103","D104","D200","D202","D205","D212","D400","D401","D415",
+    "E501","EM102","ERA001",
+    "FBT001",
+    "Q000", "N806",
+    "PT009","PT015","PLR0915","PLR1711","PLR0912","PLR0913","PLR2004",
+    "RET505","RET507",
+    "S101","SIM114",
+    "T201",
+    "TRY003","TRY300"
+]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "mypy-recurrent.*"
+]
+ignore_missing_imports = true

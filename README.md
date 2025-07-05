@@ -7,10 +7,6 @@ CLI utilities to:
 
 ## Usage
 
-```sh
-source .venv/bin/activate
-```
-
 To run tests:
 ```
 > make test
@@ -24,7 +20,7 @@ sometimes,  `AWS_SESSION_TOKEN`, `AWS_CREDENTIAL_EXPIRATION`.
 
 Then:
 ```
-> python src/describe.py -h
+> uv run src/describe.py -h
 usage: aws-describe [-h] [-r] [--ids] [--id-names] [-v] instance
 
 AWS object/instance explorer
@@ -47,7 +43,7 @@ Examples:
 Another example, now using `--query` with [JMESPath](https://jmespath.org/)
 syntax:
 ```
-python src/describe.py vpn-176b7876  --query CustomerGatewayConfiguration
+uv run src/describe.py vpn-176b7876  --query CustomerGatewayConfiguration
 ```
 is equivalent to:
 ```sh
@@ -65,7 +61,7 @@ sometimes,  `AWS_SESSION_TOKEN`, `AWS_CREDENTIAL_EXPIRATION`.
 
 Then:
 ```
-> python src/find-instance.py -h
+> uv run src/find-instance.py -h
 usage: aws-find-instance [-h] [-v] [--ids] [--id-names] [--terminate] instance
 
 Find an AWS EC2 instance(s) by a related ID or ARN

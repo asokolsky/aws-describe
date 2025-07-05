@@ -21,6 +21,5 @@
         "scrapy",
         "serialport",
         "socketno"
-    ],
-    "esbonio.sphinx.confDir": ""
+    ]
 }
