@@ -82,3 +82,5 @@ Examples:
     python src/find-instance.py -v --ids vpc-82a609e6
     python src/find-instance.py arn:aws:iam::123456789012:instance-profile/foo_bar
 ```
+
+TODO: use mise
