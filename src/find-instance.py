@@ -149,7 +149,7 @@ def find_instances(
             if p.search(id):
                 if verbose:
                     print(f'Treating {id} as {msg}', file=sys.stderr)
-                prefix, aws, service, region, acct_id, res_type, res_name = parse_arn(
+                _, _, service, region, acct_id, res_type, res_name = parse_arn(
                     id
                 )
                 instances = foo(service, region, acct_id, res_type, res_name)

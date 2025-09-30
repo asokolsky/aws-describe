@@ -451,7 +451,7 @@ def describe_arn(id: str) -> tuple[int, dict[str, Any]]:
     """
     Return exit_code, res dict.
     """
-    prefix, aws, service, region, acct_id, res_type, res_name = parse_arn(id)
+    _, aws, service, _, _, res_type, res_name = parse_arn(id)
     if not aws:
         # parsing arn failed
         eprint('ERROR: Failed to parse:', id)
@@ -636,10 +636,10 @@ def describe_all(
     """
     Implementation
     """
-    ec, res, more_ids = describe_one(id, verbose, to_print, ignore_keys, query)
+    ec, _, more_ids = describe_one(id, verbose, to_print, ignore_keys, query)
     described_ids.add(id)
     for id1 in more_ids - described_ids:
-        ec1, res1 = describe_all(
+        _, _ = describe_all(
             id1, verbose, to_print, described_ids, ignore_keys, query
         )
     return ec, described_ids
@@ -717,7 +717,7 @@ def main() -> int:
             )
             more_ids: set[Any] = set()
         else:
-            ec, res, more_ids = describe_one(
+            ec, _, more_ids = describe_one(
                 args.instance, args.verbose, to_print, ignore_keys, args.query
             )
             described_ids = {args.instance}
