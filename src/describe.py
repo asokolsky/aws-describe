@@ -9,7 +9,7 @@ import botocore.exceptions
 import jmespath
 from tabulate import tabulate
 
-from .common import OutputOption, eprint, get_tag, json_datetime_serializer, parse_arn
+from common import OutputOption, eprint, get_tag, json_datetime_serializer, parse_arn
 
 
 def find_all_ids(d: dict[str, Any], verbose: bool, ignore_keys: list[str]) -> set[str]:
@@ -447,6 +447,22 @@ def describe_acm_arn(
     return ec, res
 
 
+def describe_lambda_arn(
+    arn: str, res_type: str, res_name: str
+) -> tuple[int, dict[str, Any]]:
+    ec = 0
+    eprint('res_type:', res_type)
+    eprint('res_name:', res_name)
+    client = boto3.client('lambda')
+    res = client.get_function(FunctionName=res_name)
+    res = res['Configuration']
+    # eprint('ERROR: not implemented for es')
+    #    eprint(f'res_type: {res_type}')
+    #    eprint(f'res_name: {res_name}')
+    #    ec = 1
+    return ec, res
+
+
 def describe_arn(id: str) -> tuple[int, dict[str, Any]]:
     """
     Return exit_code, res dict.
@@ -479,6 +495,8 @@ def describe_arn(id: str) -> tuple[int, dict[str, Any]]:
         ec, res = describe_ec2_arn(id, res_type, res_name)
     elif service == 'acm':
         ec, res = describe_acm_arn(id, res_type, res_name)
+    elif service == 'lambda':
+        ec, res = describe_lambda_arn(id, res_type, res_name)
     else:
         eprint('ERROR: not implemented for', service)
         ec = 1
@@ -639,9 +657,7 @@ def describe_all(
     ec, _, more_ids = describe_one(id, verbose, to_print, ignore_keys, query)
     described_ids.add(id)
     for id1 in more_ids - described_ids:
-        _, _ = describe_all(
-            id1, verbose, to_print, described_ids, ignore_keys, query
-        )
+        _, _ = describe_all(id1, verbose, to_print, described_ids, ignore_keys, query)
     return ec, described_ids
 
 

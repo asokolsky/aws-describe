@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from argparse import ArgumentParser, RawTextHelpFormatter
 from typing import Any
@@ -7,15 +5,12 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 
+from common import eprint, verbose, vprint
+
 #
 # Never take these services consideration
 #
-service_to_exclude: list[str] = [
-    'athena',
-    'cloudfront',
-    'glue',
-    'memorydb'
-]
+service_to_exclude: list[str] = ['athena', 'cloudfront', 'glue', 'memorydb']
 #
 # Never take these resource types into consideration
 #
@@ -25,18 +20,6 @@ resource_type_to_exclude: list[str] = [
     'ec2:security-group-rule',
     'rds:cluster-snapshot',
 ]
-
-verbose = False
-
-
-def vprint(*args: Any) -> None:
-    if verbose:
-        print(*args)
-
-
-def eprint(*args: Any) -> None:
-    print(*args, file=sys.stderr)
-
 
 epilog = """Examples:
     python iac-coverage.py -v
@@ -62,7 +45,9 @@ def process_resource(resource: dict, accumulator: dict[str, dict[str, int]]) -> 
     return
 
 
-def get_object_count(client: str, query: str, accumulator: None | dict[str, dict[str, int]]) -> int:
+def get_object_count(
+    client, query: str, accumulator: None | dict[str, dict[str, int]]
+) -> int:
     """
     Get resource count using AWS Resource Explorer list_resources API.
 
@@ -82,7 +67,11 @@ def get_object_count(client: str, query: str, accumulator: None | dict[str, dict
             process_resource(r, accumulator)
 
     while res.get('NextToken'):
-        res = client.list_resources(Filters={'FilterString': query}, MaxResults=1000, NextToken=res.get('NextToken'))
+        res = client.list_resources(
+            Filters={'FilterString': query},
+            MaxResults=1000,
+            NextToken=res.get('NextToken'),
+        )
         resources = res.get('Resources', [])
         total += len(resources)
         if accumulator is not None:
@@ -141,15 +130,10 @@ def main() -> int:
         query = 'tag.key:clari:managed-by'
         total = get_object_count(client, full_query(query, args.region), None)
         print('Tagged:', total)
-
         #
         # by Service / ResourceType / Count
         #
-        acc: None | dict[str, dict[str, int]]
-        if verbose:
-            acc = {}
-        else:
-            acc = None
+        acc: None | dict[str, dict[str, int]] = {} if verbose else None
         query = 'tag:none -tag.key:aws*'
         total = get_object_count(client, full_query(query, args.region), acc)
         print('Untagged:', total)

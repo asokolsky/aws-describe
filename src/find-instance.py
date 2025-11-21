@@ -149,9 +149,7 @@ def find_instances(
             if p.search(id):
                 if verbose:
                     print(f'Treating {id} as {msg}', file=sys.stderr)
-                _, _, service, region, acct_id, res_type, res_name = parse_arn(
-                    id
-                )
+                _, _, service, region, acct_id, res_type, res_name = parse_arn(id)
                 instances = foo(service, region, acct_id, res_type, res_name)
 
     # failed to find anything matching the object ID

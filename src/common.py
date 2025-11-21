@@ -85,3 +85,11 @@ def parse_arn(arn: str) -> tuple[str, str, str, str, str, str, str]:
 
 def eprint(*args: Any) -> None:
     print(*args, file=sys.stderr)
+
+
+verbose = False
+
+
+def vprint(*args: Any) -> None:
+    if verbose:
+        print(*args)
